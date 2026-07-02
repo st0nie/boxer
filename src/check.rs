@@ -14,7 +14,8 @@ fn quilt(args: &[&str]) -> Command {
     cmd
 }
 
-pub fn run_check(c: &Colors, _args: &Args) -> Result<()> {
+pub fn run_check(c: &Colors, args: &Args) -> Result<()> {
+    crate::tools::ensure_installed(c, args, &["quilt"])?;
     info(c, "checking quilt patches");
 
     let patches_dir = Path::new("debian/patches");

@@ -8,7 +8,8 @@ use anyhow::{Result, bail};
 use std::path::Path;
 use std::process::Command;
 
-pub fn run_deps(c: &Colors, _args: &Args, package: Option<&str>) -> Result<()> {
+pub fn run_deps(c: &Colors, args: &Args, package: Option<&str>) -> Result<()> {
+    crate::tools::ensure_installed(c, args, &["dpkg-parsechangelog", "mk-build-deps"])?;
     info(c, "resolving build dependencies");
     let (source, _) = get_source_info()?;
     let target = package.unwrap_or(&source);
