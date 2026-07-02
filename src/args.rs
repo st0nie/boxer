@@ -17,6 +17,10 @@ pub struct Args {
     #[arg(short, long, global = true)]
     pub quiet: bool,
 
+    /// Answer yes to all prompts (skip interactive confirmation)
+    #[arg(short = 'y', long, global = true)]
+    pub yes: bool,
+
     /// When to use color
     #[arg(long, global = true, default_value = "auto")]
     pub color: ColorMode,

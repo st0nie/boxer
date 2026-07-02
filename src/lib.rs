@@ -7,6 +7,7 @@ pub mod debian;
 pub mod deps;
 pub mod exec;
 pub mod fmt;
+pub mod tools;
 
 pub use fmt::Colors;
 
