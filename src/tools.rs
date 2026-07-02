@@ -6,6 +6,7 @@ use crate::fmt::{detail, success, warning};
 use anyhow::{Context, Result, bail};
 use std::io::{BufRead, Write};
 use std::process::Command;
+use which::which;
 
 /// External binaries boxer shells out to, paired with the Debian package that
 /// provides them. `dpkg-buildpackage` and `dpkg-parsechangelog` both map to
@@ -23,9 +24,7 @@ const TOOL_PACKAGES: &[(&str, &str)] = &[
 pub fn ensure_installed(c: &Colors, args: &Args, bins: &[&str]) -> Result<()> {
     let mut missing: Vec<(&str, &str)> = Vec::new();
     for &bin in bins {
-        let probe = Command::new(bin).output();
-        let absent = matches!(probe, Err(e) if e.kind() == std::io::ErrorKind::NotFound);
-        if absent {
+        if which(bin).is_err() {
             let pkg = TOOL_PACKAGES
                 .iter()
                 .find(|(b, _)| *b == bin)
