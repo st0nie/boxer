@@ -51,7 +51,7 @@ pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
     let tarball = format!("{}-{}.tar.gz", source, version);
     info(c, &format!("creating tarball: {}", tarball));
 
-    let mut tar_args = vec!["--force-local".to_string(), "czf".to_string(), tarball.clone()];
+    let mut tar_args = vec!["--force-local".to_string(), "-czf".to_string(), tarball.clone()];
     tar_args.extend(local_names.iter().cloned());
     let mut cmd = Command::new("tar");
     cmd.args(&tar_args);
