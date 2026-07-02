@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 pub mod args;
 pub mod build;
 pub mod check;

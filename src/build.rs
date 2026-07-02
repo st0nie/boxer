@@ -1,13 +1,14 @@
+use crate::Colors;
 use crate::args::Args;
 use crate::debian::{collect_files_by_ext, get_source_info};
 use crate::deps::run_deps;
-use crate::exec::{run, run_env, SUDO_BIN};
+use crate::exec::run;
 use crate::fmt::{detail, info, success};
-use crate::Colors;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
     let _verbose = args.verbose >= 1;
@@ -21,12 +22,10 @@ pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
     success(c, &format!("building {} {}", source, version));
 
     info(c, "running dpkg-buildpackage");
-    run_env(
-        "dpkg-buildpackage",
-        &["-b", "-uc", "-us"],
-        "DEB_BUILD_OPTIONS",
-        "nocheck",
-    )?;
+    let mut cmd = Command::new("dpkg-buildpackage");
+    cmd.args(["-b", "-uc", "-us"])
+        .env("DEB_BUILD_OPTIONS", "nocheck");
+    run(&mut cmd)?;
     success(c, "dpkg-buildpackage finished");
 
     let current = std::env::current_dir()?;
@@ -39,7 +38,7 @@ pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
     }
     for src in &debs {
         let dst = current.join(src.file_name().unwrap());
-        fs::rename(src, &dst).with_context(|| format!("failed to move {:?} to {:?}", src, dst))?;
+        move_file(src, &dst).with_context(|| format!("failed to move {:?} to {:?}", src, dst))?;
         success(c, &format!("moved {}", dst.display()));
     }
 
@@ -52,9 +51,11 @@ pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
     let tarball = format!("{}-{}.tar.gz", source, version);
     info(c, &format!("creating tarball: {}", tarball));
 
-    let mut args = vec!["czf", &tarball];
-    args.extend(local_names.iter().map(|s| s.as_str()));
-    run("tar", &args, false, SUDO_BIN)?;
+    let mut tar_args = vec!["czf".to_string(), tarball.clone()];
+    tar_args.extend(local_names.iter().cloned());
+    let mut cmd = Command::new("tar");
+    cmd.args(&tar_args);
+    run(&mut cmd)?;
     success(c, &format!("created {}", tarball));
 
     info(c, "cleaning generated files");
@@ -65,6 +66,20 @@ pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
 
     success(c, &format!("build complete: {}", tarball));
     Ok(())
+}
+
+/// Move a file, falling back to copy+remove when source and destination live
+/// on different filesystems (`rename` fails with `EXDEV` in that case).
+fn move_file(src: &Path, dst: &Path) -> Result<()> {
+    match fs::rename(src, dst) {
+        Ok(()) => Ok(()),
+        Err(e) if e.raw_os_error() == Some(18) => {
+            fs::copy(src, dst).with_context(|| format!("failed to copy {:?} to {:?}", src, dst))?;
+            fs::remove_file(src).with_context(|| format!("failed to remove {:?}", src))?;
+            Ok(())
+        }
+        Err(e) => Err(anyhow::Error::new(e)),
+    }
 }
 
 fn clean_parent_build_artifacts(c: &Colors) -> Result<()> {

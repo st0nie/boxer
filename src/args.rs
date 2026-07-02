@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
+use std::io::{IsTerminal, stderr, stdout};
 
 #[derive(Parser)]
 #[command(name = "boxer")]
@@ -46,7 +47,7 @@ impl Args {
         match self.color {
             ColorMode::Always => true,
             ColorMode::Never => false,
-            ColorMode::Auto => atty::is(atty::Stream::Stdout),
+            ColorMode::Auto => stdout().is_terminal() && stderr().is_terminal(),
         }
     }
 }

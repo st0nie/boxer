@@ -1,6 +1,6 @@
 use boxer::args::{Args, Op};
 use boxer::fmt::error;
-use boxer::{setup_logging, Colors};
+use boxer::{Colors, setup_logging};
 use clap::Parser;
 
 fn main() {

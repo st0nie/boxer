@@ -1,15 +1,14 @@
-use crate::args::Args;
-use crate::debian::{clean_deps, get_source_info, parse_build_depends};
-use crate::exec::{run, run_env, SUDO_BIN};
-use crate::fmt::{detail, info, success};
 use crate::Colors;
+use crate::args::Args;
+use crate::debian::get_source_info;
+use crate::exec::{run, run_sudo};
+use crate::fmt::{info, success};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::path::Path;
+use std::process::Command;
 
-pub fn run_deps(c: &Colors, args: &Args, package: Option<&str>) -> Result<()> {
-    let verbose = args.verbose >= 1;
-
+pub fn run_deps(c: &Colors, _args: &Args, package: Option<&str>) -> Result<()> {
     info(c, "resolving build dependencies");
     let (source, _) = get_source_info()?;
     let target = package.unwrap_or(&source);
@@ -19,41 +18,24 @@ pub fn run_deps(c: &Colors, args: &Args, package: Option<&str>) -> Result<()> {
         bail!("debian/control not found; boxer deps only works in a Debian source tree");
     }
 
-    detail(c, "reading build dependencies from debian/control");
-    let raw_deps = parse_build_depends(Path::new("debian/control"))?;
-
-    if raw_deps.trim().is_empty() {
-        bail!("no build dependencies found");
-    }
-
-    detail(c, "cleaning dependency syntax");
-    let cleaned = clean_deps(&raw_deps);
-    if cleaned.is_empty() {
-        bail!("no build dependencies left after cleaning");
-    }
-    success(c, &format!("{} build dependencies", cleaned.split(", ").count()));
-    if verbose {
-        detail(c, &cleaned);
-    }
-
     info(c, "installing build dependencies via mk-build-deps");
-    run_env(
-        "mk-build-deps",
-        &[
-            "--install",
-            "--root-cmd",
-            SUDO_BIN,
-            "--remove",
-            "--tool",
-            "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y",
-            "debian/control",
-        ],
-        "DEBIAN_FRONTEND",
-        "noninteractive",
-    )?;
+    let mut cmd = Command::new("mk-build-deps");
+    cmd.args([
+        "--install",
+        "--root-cmd",
+        "sudo",
+        "--remove",
+        "--tool",
+        "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y",
+        "debian/control",
+    ])
+    .env("DEBIAN_FRONTEND", "noninteractive");
+    run(&mut cmd)?;
 
     let meta_pkg = format!("{}-build-deps", target);
-    run("apt-mark", &["auto", &meta_pkg], true, SUDO_BIN)?;
+    let mut cmd = Command::new("apt-mark");
+    cmd.args(["auto", &meta_pkg]);
+    run_sudo(&mut cmd)?;
 
     success(c, "build dependencies installed and marked as auto");
     Ok(())
