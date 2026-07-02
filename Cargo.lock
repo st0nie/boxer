@@ -107,6 +107,7 @@ dependencies = [
  "env_logger",
  "fs-err",
  "log",
+ "regex",
  "tempfile",
 ]
 
