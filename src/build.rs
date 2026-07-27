@@ -11,8 +11,6 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
-    let _verbose = args.verbose >= 1;
-
     crate::tools::ensure_installed(
         c,
         args,
@@ -87,7 +85,7 @@ pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
 fn move_file(src: &Path, dst: &Path) -> Result<()> {
     match fs::rename(src, dst) {
         Ok(()) => Ok(()),
-        Err(e) if e.raw_os_error() == Some(18) => {
+        Err(e) if e.kind() == std::io::ErrorKind::CrossesDevices => {
             fs::copy(src, dst).with_context(|| format!("failed to copy {:?} to {:?}", src, dst))?;
             fs::remove_file(src).with_context(|| format!("failed to remove {:?}", src))?;
             Ok(())

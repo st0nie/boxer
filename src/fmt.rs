@@ -3,12 +3,10 @@ use ansiterm::Style;
 
 /// Colour palette used across boxer, modelled after paru's `Colors`.
 ///
-/// Every style is constructed once at startup and stored as a field, so the
-/// output helpers never branch on `enabled` — when colour is disabled we
-/// simply use `Style::new()` (plain) for every field.
-#[derive(Debug, Copy, Clone)]
+/// Every style is constructed once at startup; when colour is disabled every
+/// field keeps the default (plain) style.
+#[derive(Debug, Copy, Clone, Default)]
 pub struct Colors {
-    pub enabled: bool,
     pub action: Style,
     pub bold: Style,
     pub error: Style,
@@ -18,26 +16,10 @@ pub struct Colors {
     pub dim: Style,
 }
 
-impl Default for Colors {
-    fn default() -> Self {
-        Colors {
-            enabled: false,
-            action: Style::new(),
-            bold: Style::new(),
-            error: Style::new(),
-            warning: Style::new(),
-            success: Style::new(),
-            green: Style::new(),
-            dim: Style::new(),
-        }
-    }
-}
-
 impl Colors {
     pub fn new(enabled: bool) -> Self {
         if enabled {
             Colors {
-                enabled: true,
                 action: Style::new().fg(Color::Blue).bold(),
                 bold: Style::new().bold(),
                 error: Style::new().fg(Color::Red).bold(),

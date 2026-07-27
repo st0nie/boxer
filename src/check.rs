@@ -25,8 +25,9 @@ pub fn run_check(c: &Colors, args: &Args) -> Result<()> {
     }
 
     let has_patches = fs::read_dir(patches_dir)?.filter_map(|e| e.ok()).any(|e| {
-        let name = e.file_name().to_string_lossy().to_string();
-        e.file_type().map(|t| t.is_file()).unwrap_or(false)
+        let name = e.file_name();
+        let name = name.to_string_lossy();
+        e.file_type().ok().is_some_and(|t| t.is_file())
             && !name.starts_with('.')
             && !name.ends_with('~')
             && name != "series"
