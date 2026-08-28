@@ -11,6 +11,7 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn run_build(c: &Colors, args: &Args) -> Result<()> {
+    let _root = crate::exec::acquire_root()?;
     crate::tools::ensure_installed(
         c,
         args,

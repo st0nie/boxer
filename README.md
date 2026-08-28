@@ -8,6 +8,7 @@ A small CLI that wraps the Debian package build pipeline — quilt patch checks,
 - **`boxer deps`** — generate and install the build-dependency meta package via `mk-build-deps`
 - **`boxer build`** — run check + deps, build binary packages, archive `.deb`s into a tarball, then clean up
 - **Auto-install missing tools** — probes `$PATH` for required binaries and offers to `apt-get install` them
+- **Configurable privilege escalation** — `sudo` by default, overridable (e.g. `keyi`); credentials are primed up front so a password prompt never interrupts a build
 - Colored output, configurable verbosity, and a `--yes` flag for non-interactive runs
 
 ## Installation
@@ -76,7 +77,22 @@ Before running, boxer checks that the required external tools are on `$PATH`:
 | `dpkg-buildpackage` | `dpkg-dev` | build |
 | `dpkg-parsechangelog` | `dpkg-dev` | deps, build |
 
-If any are missing, boxer lists them and asks for confirmation before running `sudo apt-get install -y`. Use `--yes` to skip the prompt.
+If any are missing, boxer lists them and asks for confirmation before running `apt-get install -y` via the configured root command. Use `--yes` to skip the prompt.
+
+## Configuration
+
+Privileged commands run under a root command, resolved in this order:
+
+1. `BOXER_ROOT_CMD` environment variable
+2. `root_cmd` in `$XDG_CONFIG_HOME/boxer/config.toml` (default `~/.config/boxer/config.toml`):
+
+   ```toml
+   root_cmd = "keyi"
+   ```
+
+3. `sudo`
+
+Before `boxer build` or `boxer deps` touches anything privileged, boxer primes the credentials (`root_cmd true`) so any password prompt happens at the very start of the run, and refreshes them in the background until the command finishes.
 
 ## License
 

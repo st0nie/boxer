@@ -19,7 +19,8 @@ const TOOL_PACKAGES: &[(&str, &str)] = &[
 ];
 
 /// Ensure every binary in `bins` is reachable on `$PATH`, installing missing
-/// ones via `sudo apt-get install -y`. Silent no-op when all are present;
+/// ones via the configured root command (`BOXER_ROOT_CMD`, default `sudo`)
+/// followed by `apt-get install -y`. Silent no-op when all are present;
 /// prompts for confirmation unless `args.yes` is set.
 pub fn ensure_installed(c: &Colors, args: &Args, bins: &[&str]) -> Result<()> {
     let mut missing: Vec<(&str, &str)> = Vec::new();

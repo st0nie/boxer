@@ -1,7 +1,7 @@
 use crate::Colors;
 use crate::args::Args;
 use crate::debian::get_source_info;
-use crate::exec::{run, run_sudo};
+use crate::exec::{root_cmd, run, run_sudo};
 use crate::fmt::{info, success};
 
 use anyhow::{Result, bail};
@@ -9,6 +9,7 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn run_deps(c: &Colors, args: &Args, package: Option<&str>) -> Result<()> {
+    let _root = crate::exec::acquire_root()?;
     crate::tools::ensure_installed(c, args, &["dpkg-parsechangelog", "mk-build-deps"])?;
     info(c, "resolving build dependencies");
     let (source, _) = get_source_info()?;
@@ -24,7 +25,7 @@ pub fn run_deps(c: &Colors, args: &Args, package: Option<&str>) -> Result<()> {
     cmd.args([
         "--install",
         "--root-cmd",
-        "sudo",
+        &root_cmd(),
         "--remove",
         "--tool",
         "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y",
