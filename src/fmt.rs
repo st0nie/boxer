@@ -14,6 +14,7 @@ pub struct Colors {
     pub success: Style,
     pub green: Style,
     pub dim: Style,
+    pub quiet: bool,
 }
 
 impl Colors {
@@ -27,23 +28,35 @@ impl Colors {
                 success: Style::new().fg(Color::Green).bold(),
                 green: Style::new().fg(Color::Green),
                 dim: Style::new().dimmed(),
+                quiet: false,
             }
         } else {
             Colors::default()
         }
     }
+
+    pub fn with_quiet(mut self, quiet: bool) -> Self {
+        self.quiet = quiet;
+        self
+    }
 }
 
 pub fn info(c: &Colors, msg: &str) {
-    println!("{} {}", c.action.paint("::"), c.bold.paint(msg));
+    if !c.quiet {
+        println!("{} {}", c.action.paint("::"), c.bold.paint(msg));
+    }
 }
 
 pub fn success(c: &Colors, msg: &str) {
-    println!("{} {}", c.success.paint("::"), c.green.paint(msg));
+    if !c.quiet {
+        println!("{} {}", c.success.paint("::"), c.green.paint(msg));
+    }
 }
 
 pub fn warning(c: &Colors, msg: &str) {
-    eprintln!("{} {}", c.warning.paint("::"), c.warning.paint(msg));
+    if !c.quiet {
+        eprintln!("{} {}", c.warning.paint("::"), c.warning.paint(msg));
+    }
 }
 
 pub fn error(c: &Colors, msg: &str) {
@@ -56,5 +69,22 @@ pub fn error(c: &Colors, msg: &str) {
 }
 
 pub fn detail(c: &Colors, msg: &str) {
-    println!("{} {}", c.dim.paint("  ->"), c.dim.paint(msg));
+    if !c.quiet {
+        println!("{} {}", c.dim.paint("  ->"), c.dim.paint(msg));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn colors_with_quiet_preserves_palette() {
+        let plain = Colors::new(false);
+        assert!(!plain.quiet);
+
+        let quiet = Colors::new(true).with_quiet(true);
+        assert!(quiet.quiet);
+        assert!(quiet.bold.is_bold);
+    }
 }

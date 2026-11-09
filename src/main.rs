@@ -5,7 +5,7 @@ use clap::Parser;
 
 fn main() {
     let args = Args::parse();
-    let c = Colors::new(args.color_enabled());
+    let c = Colors::new(args.color_enabled()).with_quiet(args.quiet);
     setup_logging(args.verbose, args.quiet);
 
     let result = match &args.op {

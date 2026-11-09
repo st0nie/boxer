@@ -14,6 +14,7 @@ use which::which;
 const TOOL_PACKAGES: &[(&str, &str)] = &[
     ("quilt", "quilt"),
     ("mk-build-deps", "devscripts"),
+    ("equivs-build", "equivs"),
     ("dpkg-buildpackage", "dpkg-dev"),
     ("dpkg-parsechangelog", "dpkg-dev"),
 ];

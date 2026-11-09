@@ -49,10 +49,9 @@ boxer deps my-package       # override the target package name
 
 ### `boxer build`
 
-Full pipeline: `check` → `deps` → `dpkg-buildpackage -b -uc -us` → collect the `.deb`/`.udeb` files generated for the current source version (including `-dbgsym` debug packages) into a `<source>-<version>.tar.gz` → remove this source package's leftover build artifacts from the parent directory.
+Full pipeline: `check` → `deps` → `dpkg-buildpackage -b -uc -us` (with `nocheck` merged into `DEB_BUILD_OPTIONS`) → archive the `.deb`/`.udeb`/`.ddeb` files generated for the current source version (including `-dbgsym` debug packages) directly from the parent directory into `<source>-<version>.tar.gz` → remove this source package's leftover build artifacts from the parent directory.
 
-Only artifacts belonging to the current source package are touched: stale `.deb`s from other versions are not added to the tarball, and files belonging to other packages in the parent directory are left alone. Cleanup removes this source package's artifacts of any version — the binary packages declared in `debian/control`, their `-dbgsym` companions, and the source's `.buildinfo`/`.changes` files.
-
+Only artifacts belonging to the current source package are touched: stale `.deb`s from other versions are not added to the tarball, and files belonging to other packages in the parent directory are left alone. Cleanup removes this source package's artifacts of any version — the binary packages declared in `debian/control` (and recorded in `.changes`), their `-dbgsym` companions, and the source's `.buildinfo`/`.changes` files.
 ```sh
 boxer build
 ```
@@ -76,6 +75,7 @@ Before running, boxer checks that the required external tools are on `$PATH`:
 |--------|----------------|---------|
 | `quilt` | `quilt` | check, build |
 | `mk-build-deps` | `devscripts` | deps, build |
+| `equivs-build` | `equivs` | deps, build |
 | `dpkg-buildpackage` | `dpkg-dev` | build |
 | `dpkg-parsechangelog` | `dpkg-dev` | deps, build |
 
